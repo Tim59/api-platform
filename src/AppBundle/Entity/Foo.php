@@ -10,13 +10,11 @@ use Symfony\Component\Serializer\Annotation\Groups;
 /**
  * This is a dummy entity. Remove it!
  *
- * @ApiResource(
- *     attributes=
- *     {"filters"={}},
- *     itemOperations={
- *          "get"={"method"="GET", "normalization_context"={"groups"={"read","read_child"}}},
- *     }
- * )
+ * @ORM\HasLifecycleCallbacks()
+ * @ApiResource(attributes={"filters"={"custom_search"},
+ *      "normalization_context"={"groups"={"read"}},
+ *      "denormalization_context"={"groups"={"write"}}
+ *     })
  * @ORM\Entity
  */
 class Foo
@@ -25,8 +23,9 @@ class Foo
      * @var int The entity Id
      *
      * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
+     * @ORM\Column(type="guid")
+     * @Assert\Uuid
+     * @Groups({"read","write"})
      */
     private $id;
 
@@ -35,7 +34,7 @@ class Foo
      *
      * @ORM\Column
      * @Assert\NotBlank
-     * @Groups({"read"})
+     * @Groups({"read","write"})
      */
     private $bar = '';
 
@@ -69,6 +68,12 @@ class Foo
         return $this->id;
     }
 
+    public function setId($id)
+    {
+        $this->id = $id;
+        return $this;
+    }
+
     public function getBar() : string
     {
         return $this->bar;
@@ -77,5 +82,16 @@ class Foo
     public function setBar(string $bar)
     {
         $this->bar = $bar;
+    }
+
+    /**
+     * @ORM\PrePersist
+     * @ORM\PreUpdate
+     */
+    public function prePersist()
+    {
+        if ($this->id === null) {
+            $this->id = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x', mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0x0fff) | 0x4000, mt_rand(0, 0x3fff) | 0x8000, mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff));
+        }
     }
 }

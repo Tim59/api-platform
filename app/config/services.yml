@@ -7,3 +7,7 @@ services:
 #    service_name:
 #        class: AppBundle\Directory\ClassName
 #        arguments: ["@another_service_name", "plain_value", "%parameter_name%"]
+     app.filter.custom:
+        class:     'AppBundle\Filter\CustomFilter'
+        arguments: [ '@doctrine', '@request_stack', '@service_container' ]
+        tags:      [ { name: 'api_platform.filter', id: 'custom_search' } ]
